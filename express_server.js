@@ -70,3 +70,9 @@ app.get("/u/:id", (req, res) => {
   
 });
 
+app.post("/urls/:id/delete", (req, res) => {
+  const shortURL = req.params.id; // Extract the shortURL from the request parameters
+    delete urlDatabase[shortURL]; // Remove the URL resource using the delete operator
+    res.redirect("/urls"); // Redirect the client back to the urls_index page
+ 
+});
