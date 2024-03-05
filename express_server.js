@@ -22,9 +22,13 @@ function generateRandomString() {
 }
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const shortURL = generateRandomString(); // Generate a random short URL
+  const longURL = req.body.longURL; // Get the long URL from the request body
+  urlDatabase[shortURL] = longURL; // Save the short URL and its corresponding long URL to the database
+  res.redirect(`/urls/${shortURL}`); // Redirect to the newly created short URL's page
 });
+
+
 app.get("/", (req,res) => {
   res.send("Hello");
 });
@@ -46,6 +50,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -56,5 +61,12 @@ app.get("/urls/:id", (req, res) => {
   const longURL = urlDatabase[id];
   const templateVars = { id, longURL };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id; // Extract the shortURL from the request parameters
+  const longURL = urlDatabase[shortURL]; // Get the longURL associated with the shortURL from the urlDatabase
+    res.redirect(longURL); // Redirect to the longURL
+  
 });
 
