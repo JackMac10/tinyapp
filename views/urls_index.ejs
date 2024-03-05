@@ -17,6 +17,7 @@
         <tr>
           <th scope="col">Short URL ID</th>
           <th scope="col">Long URL</th>
+          <th scope="col">Edit</th>
           <th scope="col">Delete</th> <!-- New column for delete buttons -->
         </tr>
       </thead>
@@ -25,6 +26,10 @@
           <tr>
             <td><%= id %></td>
             <td><%= urls[id] %></td>
+            <td>
+              <!-- Edit link for each URL object -->
+              <a href="/urls/<%= id %>">Edit</a>
+            </td>
             <td>
               <!-- Delete form for each URL object -->
               <form method="POST" action="/urls/<%= id %>/delete">
@@ -35,7 +40,7 @@
         <% } %>
       </tbody>
     </table>
-    <a href="#">Shorten a new URL</a>
+    <a href="/urls/new">Shorten a new URL</a>
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
