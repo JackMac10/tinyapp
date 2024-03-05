@@ -83,3 +83,9 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[id] = newLongURL;
   res.redirect("/urls");
 });
+
+app.post("/login", (req, res) => {
+  const { username } = req.body; // Extract username from request body
+  res.cookie('username', username); // Set cookie named 'username' with the submitted value
+  res.redirect("/urls"); // Redirect back to the /urls page
+});
