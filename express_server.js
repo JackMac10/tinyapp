@@ -35,6 +35,15 @@ function generateRandomString() {
   return randomString;
 }
 
+function getUserByEmail(email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null; // Return null if user is not found
+}
+
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(); // Generate a random short URL
   const longURL = req.body.longURL; // Get the long URL from the request body
@@ -129,6 +138,16 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) { // check if email or password feilds are empty
+    res.status(400).send("Email and password cannot be empty");
+    return;
+  }
+  
+  if (getUserByEmail(email)) {
+    res.status(400).send("Email already exists");
+    return;
+  }
   const userId = generateRandomString();
   const newUser = {
     id: userId,
@@ -137,8 +156,6 @@ app.post("/register", (req, res) => {
   };
 
   users[userId] = newUser;
-
   res.cookie("user_id", userId);
-
   res.redirect("/urls");
 });
