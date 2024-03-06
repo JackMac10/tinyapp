@@ -51,7 +51,6 @@ app.get("/urls", (req, res) => {
   const templateVars = {
     username: req.cookies["username"],
     urls: urlDatabase
-    // ... any other vars
   };
   res.render("urls_index", templateVars);
 });
@@ -59,7 +58,6 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     username: req.cookies["username"],
-    // other variables as needed
   };
   res.render("urls_new", templateVars);
 });
