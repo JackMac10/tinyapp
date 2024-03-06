@@ -70,7 +70,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { 
     id, 
     longURL,
-    username: req.cookies["username"] // Pass the username here
+    username: req.cookies["username"]
   };
   res.render("urls_show", templateVars);
 });
@@ -107,3 +107,11 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls"); // Redirect back to the /urls page
 });
 
+app.get("/register", (req, res) => {
+  //const templateVars = { 
+  //  username: req.cookies["username"],
+  //  email: req.cookies["email"],
+  //  password: req.cookies["password"]
+  //};
+  res.render("register");
+});
