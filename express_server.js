@@ -64,9 +64,16 @@ app.get("/", (req,res) => {
 //True app Homepage
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  const userURLs = {}; // Initialize an empty object to store URLs associated with the current user
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === req.cookies.user_id) { // Check if the URL belongs to the current user
+      userURLs[shortURL] = urlDatabase[shortURL].longURL; // Add the URL to the user's URLs object
+    }
+  }
   const templateVars = {
     user,
-    urls: urlDatabase
+    urls: userURLs // Pass the user's URLs object to the template
+    // ... any other vars
   };
   res.render("urls_index", templateVars);
 });
@@ -79,7 +86,7 @@ app.post("/urls", (req, res) => {
   } else {
     const shortURL = generateRandomString(); // Generate a random short URL
     const longURL = req.body.longURL; // Get the long URL from the request body
-    urlDatabase[shortURL] = longURL; // Save the short URL and its corresponding long URL to the database
+    urlDatabase[shortURL] = { longURL: longURL, userID: user.id }; // Save the short URL and its corresponding long URL and userID to the database
     res.redirect(`/urls/${shortURL}`); // Redirect to the newly created short URL's page
   }
 });
@@ -100,12 +107,17 @@ app.get("/urls/new", (req, res) => {
 //URL page by TINY_URL_ID
 app.get("/urls/:id", (req, res) => {
   const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
-  const id = req.params.id;
-  const longURL = urlDatabase[id];
-  const templateVars = {
-    id,
-    longURL,
-    user
+  const shortURL = req.params.id;
+  const url = urlDatabase[shortURL];
+  if (!url || url.userID !== req.cookies.user_id) { // Check if the URL exists and belongs to the current user
+    res.status(404).send("Error: URL not found or does not belong to the current user.");
+    return;
+  }
+  const templateVars = { 
+    shortURL, 
+    longURL: url.longURL,
+    user,
+    id: shortURL // Pass the shortURL as id to the template
   };
   res.render("urls_show", templateVars);
 });
@@ -119,22 +131,48 @@ app.get("/u/:id", (req, res) => {
     // If the short URL does not exist in the database, send a relevant error message
     res.status(404).send("<h1>404 Not Found</h1><p>The requested URL does not exist.</p>");
   } else {
-    res.redirect(longURL); // Redirect to the longURL
+    res.redirect(longURL.longURL); // Redirect to the longURL
   }
 });
 
 //delete URL from database
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id; // Extract the shortURL from the request parameters
-  delete urlDatabase[shortURL]; // Remove the URL resource using the delete operator
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  if (!urlDatabase[shortURL]) { // Check if the URL exists
+    res.status(404).send("Error: URL not found.");
+    return;
+  }
+  if (!user) { // Check if the user is logged in
+    res.status(401).send("Error: You must be logged in to delete this URL.");
+    return;
+  }
+  if (urlDatabase[shortURL].userID !== user.id) { // Check if the user owns the URL
+    res.status(403).send("Error: You are not authorized to delete this URL.");
+    return;
+  }
+  delete urlDatabase[shortURL]; // Delete the URL
   res.redirect("/urls");
 });
 
 //Edit or follow LONG_URL
 app.post("/urls/:id", (req, res) => {
-  const id = req.params.id; 
+  const shortURL = req.params.id;
   const newLongURL = req.body.longURL;
-  urlDatabase[id] = newLongURL;
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  if (!urlDatabase[shortURL]) { // Check if the URL exists
+    res.status(404).send("Error: URL not found.");
+    return;
+  }
+  if (!user) { // Check if the user is logged in
+    res.status(401).send("Error: You must be logged in to edit this URL.");
+    return;
+  }
+  if (urlDatabase[shortURL].userID !== user.id) { // Check if the user owns the URL
+    res.status(403).send("Error: You are not authorized to edit this URL.");
+    return;
+  }
+  urlDatabase[shortURL].longURL = newLongURL; // Update the longURL
   res.redirect("/urls");
 });
 
