@@ -74,19 +74,28 @@ app.get("/urls", (req, res) => {
 
 //Homepage redirect handler
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString(); // Generate a random short URL
-  const longURL = req.body.longURL; // Get the long URL from the request body
-  urlDatabase[shortURL] = longURL; // Save the short URL and its corresponding long URL to the database
-  res.redirect(`/urls/${shortURL}`); // Redirect to the newly created short URL's page
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  if (!user) {
+    res.status(403).send("You must be logged in to shorten URLs."); // Respond with 403 status code if user is not logged in
+  } else {
+    const shortURL = generateRandomString(); // Generate a random short URL
+    const longURL = req.body.longURL; // Get the long URL from the request body
+    urlDatabase[shortURL] = longURL; // Save the short URL and its corresponding long URL to the database
+    res.redirect(`/urls/${shortURL}`); // Redirect to the newly created short URL's page
+  }
 });
 
 //Creating a new TINY_url
 app.get("/urls/new", (req, res) => {
   const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
-  const templateVars = {
-    user
-  };
-  res.render("urls_new", templateVars);
+  if (!user) {
+    res.redirect("/login"); // Redirect to /login if user is not logged in
+  } else {
+    const templateVars = {
+      user
+    };
+    res.render("urls_new", templateVars);
+  }
 });
 
 //URL page by TINY_URL_ID
@@ -106,7 +115,13 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // Extract the shortURL from the request parameters
   const longURL = urlDatabase[shortURL]; // Get the longURL associated with the shortURL from the urlDatabase
-  res.redirect(longURL); // Redirect to the longURL
+
+  if (!longURL) {
+    // If the short URL does not exist in the database, send a relevant error message
+    res.status(404).send("<h1>404 Not Found</h1><p>The requested URL does not exist.</p>");
+  } else {
+    res.redirect(longURL); // Redirect to the longURL
+  }
 });
 
 //delete URL from database
@@ -154,9 +169,12 @@ app.post("/logout", (req, res) => {
 //render register page
 app.get("/register", (req, res) => {
   const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
-  res.render("register", { user });
+  if (user) {
+    res.redirect("/urls"); // Redirect to /urls if user is already logged in
+  } else {
+    res.render("register", { user });
+  }
 });
-
 //Register redirect handler
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
@@ -184,6 +202,10 @@ app.post("/register", (req, res) => {
 
 //render login page
 app.get("/login", (req, res) => {
-  const user = users[req.cookies.user_id];
-  res.render("login", { user });
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  if (user) {
+    res.redirect("/urls"); // Redirect to /urls if user is already logged in
+  } else {
+    res.render("login", { user }); // Pass the user variable to the login template
+  }
 });
