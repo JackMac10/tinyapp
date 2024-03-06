@@ -122,18 +122,36 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const { user_id } = req.body; // Extract username from request body
-  res.cookie('user_id', user_id); // Set cookie named 'username' with the submitted value
-  res.redirect("/urls"); // Redirect back to the /urls page
+  const { email, password } = req.body; // Extract email and password from request body
+  const user = getUserByEmail(email); // Look up the user object using the email
+
+  if (!email || !password) { // Check if email or password fields are empty
+    res.status(400).send("Email and password cannot be empty");
+    return;
+  }
+  
+  if (!user) { // If a user with that email cannot be found, return a response with a 403 status code
+   res.status(403).send("Email not found");
+   return;
+  }
+
+  if (user.password !== password) { // If the passwords do not match, return a response with a 403 status code
+    res.status(403).send("Incorrect Email or Password");
+    return;
+  }
+
+  res.cookie("user_id", user.id);
+  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id'); // Set cookie named 'username' with the submitted value
-  res.redirect("/urls"); // Redirect back to the /urls page
+  res.clearCookie('user_id'); // Set cookie named 'user_id' with the submitted value
+  res.redirect("/login"); // Redirect back to the /login page
 });
 
 app.get("/register", (req, res) => {
-  res.render("register");
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  res.render("register", { user });
 });
 
 app.post("/register", (req, res) => {
@@ -161,5 +179,6 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");
+  const user = users[req.cookies.user_id];
+  res.render("login", { user });
 });

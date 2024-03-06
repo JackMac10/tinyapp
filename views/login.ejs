@@ -9,15 +9,15 @@
   <title>Login - TinyApp</title>
 </head>
 <body>
-
+  <%- include ('partials/_header') %>
   <main style="margin: 1em;">
     <h3>Login to Continue!</h3>
     <div>
     <main style="margin: 1em;">
       <form method="POST" action="/login">
-      <h6>Enter your Email</h3>
+      <h6>Enter your Email</h6>
         <input class="form-control mr-sm-2" type="email" placeholder="Email" name="email"><br>
-        <h6>Enter your Password</h3>
+        <h6>Enter your Password</h6>
           <input class="form-control mr-sm-2" type="password" placeholder="Password" name="password"><br>
       <button class="btn btn-primary" type="submit">Login</button>
     </div>

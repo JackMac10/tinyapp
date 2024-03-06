@@ -9,15 +9,15 @@
   <title>Register - TinyApp</title>
 </head>
 <body>
-
+  <%- include ('partials/_header') %>
   <main style="margin: 1em;">
     <h3>Make An Account</h3>
     <div>
     <main style="margin: 1em;">
       <form method="POST" action="/register">
-      <h6>Whats your Email?</h3>
+      <h6>Whats your Email?</h6>
         <input class="form-control mr-sm-2" type="email" placeholder="Email" name="email"><br>
-        <h6>Make a Password</h3>
+        <h6>Make a Password</h6>
           <input class="form-control mr-sm-2" type="password" placeholder="Password" name="password"><br>
       <button class="btn btn-primary" type="submit">Register</button>
     </div>
