@@ -12,6 +12,18 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
 
 function generateRandomString() {
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -48,29 +60,33 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
   const templateVars = {
-    username: req.cookies["username"],
+    user,
     urls: urlDatabase
     // ... any other vars
   };
   res.render("urls_index", templateVars);
 });
 
+
 app.get("/urls/new", (req, res) => {
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
   const templateVars = {
-    username: req.cookies["username"],
+    user
     // other variables as needed
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
+  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
   const id = req.params.id;
   const longURL = urlDatabase[id];
   const templateVars = { 
     id, 
     longURL,
-    username: req.cookies["username"]
+    user
   };
   res.render("urls_show", templateVars);
 });
@@ -97,21 +113,32 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const { username } = req.body; // Extract username from request body
-  res.cookie('username', username); // Set cookie named 'username' with the submitted value
+  const { user_id } = req.body; // Extract username from request body
+  res.cookie('user_id', user_id); // Set cookie named 'username' with the submitted value
   res.redirect("/urls"); // Redirect back to the /urls page
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username'); // Set cookie named 'username' with the submitted value
+  res.clearCookie('user_id'); // Set cookie named 'username' with the submitted value
   res.redirect("/urls"); // Redirect back to the /urls page
 });
 
 app.get("/register", (req, res) => {
-  //const templateVars = { 
-  //  username: req.cookies["username"],
-  //  email: req.cookies["email"],
-  //  password: req.cookies["password"]
-  //};
   res.render("register");
+});
+
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+  const userId = generateRandomString();
+  const newUser = {
+    id: userId,
+    email,
+    password
+  };
+
+  users[userId] = newUser;
+
+  res.cookie("user_id", userId);
+
+  res.redirect("/urls");
 });
