@@ -1,8 +1,10 @@
 const express = require("express");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
@@ -46,20 +48,30 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+    // ... any other vars
+  };
   res.render("urls_index", templateVars);
 });
 
-
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+    // other variables as needed
+  };
+  res.render("urls_new", templateVars);
 });
-
 
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
-  const templateVars = { id, longURL };
+  const templateVars = { 
+    id, 
+    longURL,
+    username: req.cookies["username"] // Pass the username here
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -83,3 +95,15 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[id] = newLongURL;
   res.redirect("/urls");
 });
+
+app.post("/login", (req, res) => {
+  const { username } = req.body; // Extract username from request body
+  res.cookie('username', username); // Set cookie named 'username' with the submitted value
+  res.redirect("/urls"); // Redirect back to the /urls page
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('username'); // Set cookie named 'username' with the submitted value
+  res.redirect("/urls"); // Redirect back to the /urls page
+});
+
