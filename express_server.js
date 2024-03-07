@@ -1,6 +1,7 @@
 // app dependancies
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 //server dependancies
 const app = express();
 const PORT = 8080;
@@ -75,20 +76,15 @@ app.get("/", (req,res) => {
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
   if (!user) {
-    res.status(403).send("<h1>Please log in or register to view this page.</h1>");
+    res.status(403).send("<h1>403 Forbidden.</h1> <p>Please log in or register to view this page.</p>");
     return;
   }
 
-  const userUrls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === user.id) {
-      userUrls[shortURL] = urlDatabase[shortURL].longURL; // Access longURL property
-    }
-  }
+  const userUrls = urlsForUser(user.id); // Use urlsForUser function to get URLs for the logged-in user
 
   const templateVars = {
     user,
-    urls: userUrls
+    urls: userUrls // Pass the userUrls object to the template
   };
   res.render("urls_index", templateVars);
 });
@@ -122,17 +118,17 @@ app.get("/urls/:id", (req, res) => {
   const url = urlDatabase[shortURL];
   
   if (!user) {
-    res.status(403).send("<h1>Please log in or register to view this page.</h1>");
+    res.status(403).send("<h1>403 Forbidden.</h1> <p>Please log in or register to view this page.</p>");
     return;
   }
   if (!url || url.userID !== user.id) {
-    res.status(404).send("<h1>Error: URL not found or does not belong to the current user.</h1>");
+    res.status(404).send("<h1>404 Not Found.</h1> <p>Error: URL not found or does not belong to the current user.</p>");
     return;
   }
 
   const templateVars = { 
     shortURL,
-    longURL: url.longURL,
+    longURL: url, // Pass the entire URL object
     user,
     id: shortURL // Pass the shortURL as id to the template
   };
@@ -146,7 +142,7 @@ app.get("/u/:id", (req, res) => {
 
   if (!longURL) {
     // If the short URL does not exist in the database, send a relevant error message
-    res.status(404).send("<h1>404 Not Found</h1><p>The requested URL does not exist.</p>");
+    res.status(404).send("<h1>404 Not Found.</h1><p>The requested URL does not exist.</p>");
   } else {
     res.redirect(longURL.longURL); // Redirect to the longURL
   }
@@ -158,15 +154,15 @@ app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.cookies.user_id];
 
   if (!urlDatabase[shortURL]) {  // Check if the URL exists
-    res.status(404).send("Error: URL not found.");
+    res.status(404).send("<h1>404 Not Found.</h1><p>Error: URL not found.</p>");
     return;
   }
   if (!user) {// Check if the user is logged in
-    res.status(401).send("Error: You must be logged in to delete this URL.");
+    res.status(401).send("<h1>401 Unauthorized.</h1><p>Error: You must be logged in to delete this URL.</p>");
     return;
   }
   if (urlDatabase[shortURL].userID !== user.id) { // Check if the user owns the URL
-    res.status(403).send("Error: You are not authorized to delete this URL.");
+    res.status(403).send("<h1>403 Forbidden.</h1><p>Error: You are not authorized to delete this URL.</p>");
     return;
   }
 
@@ -182,15 +178,15 @@ app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies.user_id];
 
   if (!urlDatabase[shortURL]) { // Check if the URL exists
-    res.status(404).send("Error: URL not found.");
+    res.status(404).send("<h1>404 Not Found.</h1><p>Error: URL not found.</p>");
     return;
   }
   if (!user) {// Check if the user is logged in
-    res.status(401).send("Error: You must be logged in to edit this URL.");
+    res.status(401).send("<h1>401 Unauthorized.</h1><p>Error: You must be logged in to edit this URL.</p>");
     return;
   }
   if (urlDatabase[shortURL].userID !== user.id) { // Check if the user owns the URL
-    res.status(403).send("Error: You are not authorized to edit this URL.");
+    res.status(403).send("<h1>403 Forbidden.</h1><p>Error: You are not authorized to delete this URL.</p>Error: You are not authorized to edit this URL.");
     return;
   }
 
@@ -204,15 +200,15 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(email); // Look up the user object using the email
 
   if (!email || !password) { // Check if email or password fields are empty
-    res.status(400).send("Email and password cannot be empty");
+    res.status(400).send("<h1>400 Bad Request Error.</h1><p>Email and password cannot be empty</p>");
     return;
   }
   if (!user) { // If a user with that email cannot be found, return a response with a 403 status code
-    res.status(403).send("Email not found");
+    res.status(403).send("<h1>403 Forbidden.</h1><p>Email not found</p>");
     return;
   }
-  if (user.password !== password) { // If the passwords do not match, return a response with a 403 status code
-    res.status(403).send("Incorrect Email or Password");
+  if (!bcrypt.compareSync(password, user.password)) {  // If the HASHED password does not match, return a response with a 403 status code
+    res.status(403).send("<h1>403 Forbidden.</h1><p>Incorrect Email or Password</p>");
     return;
   }
   res.cookie("user_id", user.id);
@@ -239,19 +235,20 @@ app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) { // check if email or password feilds are empty
-    res.status(400).send("Email and password cannot be empty");
+    res.status(400).send("<h1>400 Bad Request Error.</h1><p>Email and password cannot be empty</p>");
     return;
   }
   
   if (getUserByEmail(email)) { //check if email already exists at login
-    res.status(400).send("Email already exists");
+    res.status(400).send("<h1>400 Bad Request Error.</h1><p>Email and password cannot be empty</p>Email already exists");
     return;
   }
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const userId = generateRandomString();
   const newUser = {
     id: userId,
     email,
-    password
+    password: hashedPassword
   };
 
   users[userId] = newUser;
