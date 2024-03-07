@@ -1,13 +1,16 @@
 // app dependancies
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 //server dependancies
 const app = express();
 const PORT = 8080;
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
 app.set("view engine", "ejs");
 
 // sample url database
@@ -74,7 +77,7 @@ app.get("/", (req,res) => {
 
 //True app Homepage
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (!user) {
     res.status(403).send("<h1>403 Forbidden.</h1> <p>Please log in or register to view this page.</p>");
     return;
@@ -91,7 +94,7 @@ app.get("/urls", (req, res) => {
 
 //Homepage redirect handler
 app.post("/urls", (req, res) => {
-  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  const user = users[req.session.user_id]; // Lookup the user object using the user_id cookie value
   const shortURL = generateRandomString(); // Generate a random short URL
   const longURL = req.body.longURL; // Get the long URL from the request body
   urlDatabase[shortURL] = { longURL: longURL, userID: user.id }; // Save the short URL and its corresponding long URL and userID to the database
@@ -100,7 +103,7 @@ app.post("/urls", (req, res) => {
 
 //Creating a new TINY_url
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  const user = users[req.session.user_id]; // Lookup the user object using the user_id cookie value
   if (!user) {
     res.redirect("/login"); // Redirect to /login if user is not logged in
   } else {
@@ -113,7 +116,7 @@ app.get("/urls/new", (req, res) => {
 
 //URL page by TINY_URL_ID
 app.get("/urls/:id", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   const shortURL = req.params.id;
   const url = urlDatabase[shortURL];
   
@@ -151,7 +154,7 @@ app.get("/u/:id", (req, res) => {
 //delete URL from database
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
 
   if (!urlDatabase[shortURL]) {  // Check if the URL exists
     res.status(404).send("<h1>404 Not Found.</h1><p>Error: URL not found.</p>");
@@ -175,7 +178,7 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const newLongURL = req.body.longURL;
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
 
   if (!urlDatabase[shortURL]) { // Check if the URL exists
     res.status(404).send("<h1>404 Not Found.</h1><p>Error: URL not found.</p>");
@@ -211,19 +214,19 @@ app.post("/login", (req, res) => {
     res.status(403).send("<h1>403 Forbidden.</h1><p>Incorrect Email or Password</p>");
     return;
   }
-  res.cookie("user_id", user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
 //clear user_id cookies upon logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id'); // Set cookie named 'user_id' with the submitted value
+  req.session = null; // Set cookie named 'user_id' with the submitted value
   res.redirect("/login"); // Redirect back to the /login page
 });
 
 //render register page
 app.get("/register", (req, res) => {
-  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  const user = users[req.session.user_id]; // Lookup the user object using the user_id cookie value
   if (user) {
     res.redirect("/urls"); // Redirect to /urls if user is already logged in
   } else {
@@ -252,13 +255,13 @@ app.post("/register", (req, res) => {
   };
 
   users[userId] = newUser;
-  res.cookie("user_id", userId);
+  req.session.user_id = userId;
   res.redirect("/urls");
 });
 
 //render login page
 app.get("/login", (req, res) => {
-  const user = users[req.cookies.user_id]; // Lookup the user object using the user_id cookie value
+  const user = users[req.session.user_id]; // Lookup the user object using the user_id cookie value
   if (user) {
     res.redirect("/urls"); // Redirect to /urls if user is already logged in
   } else {
