@@ -2,6 +2,8 @@
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+// function dependancies
+const { getUserByEmail } = require('./helper')
 //server dependancies
 const app = express();
 const PORT = 8080;
@@ -51,15 +53,6 @@ function generateRandomString() {
     randomString += charset[randomIndex];
   }
   return randomString;
-}
-//DRY code function to see if email exists in database
-function getUserByEmail(email) { 
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
 }
 
 app.listen(PORT, () => {
@@ -200,7 +193,7 @@ app.post("/urls/:id", (req, res) => {
 //Login redirect handler
 app.post("/login", (req, res) => {
   const { email, password } = req.body; // Extract email and password from request body
-  const user = getUserByEmail(email); // Look up the user object using the email
+  const user = getUserByEmail(email, users); // Look up the user object using the email
 
   if (!email || !password) { // Check if email or password fields are empty
     res.status(400).send("<h1>400 Bad Request Error.</h1><p>Email and password cannot be empty</p>");
@@ -242,7 +235,7 @@ app.post("/register", (req, res) => {
     return;
   }
   
-  if (getUserByEmail(email)) { //check if email already exists at login
+  if (getUserByEmail(email, users)) { //check if email already exists at login
     res.status(400).send("<h1>400 Bad Request Error.</h1><p>Email and password cannot be empty</p>Email already exists");
     return;
   }
