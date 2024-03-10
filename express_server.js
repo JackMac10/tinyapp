@@ -8,7 +8,8 @@ const { getUserByEmail } = require('./helper')
 const app = express();
 const PORT = 8080;
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
@@ -55,8 +56,8 @@ function generateRandomString() {
   return randomString;
 }
 
-app.listen(PORT, () => {
-  console.log(`Example appl listening on port ${PORT}!`);
+const server = app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}!`);
 });
 
 app.get("/urls.json", (req, res) => {
@@ -64,14 +65,18 @@ app.get("/urls.json", (req, res) => {
 });
 
 // Unused Homepage
-app.get("/", (req,res) => {
-  res.send("Hello");
+app.get("/", (req, res) => {
+  if (!req.session.user_id) {
+    res.redirect("/login");
+    return;
+  }
+  res.redirect("/urls");
 });
 
 //True app Homepage
 app.get("/urls", (req, res) => {
   const user = users[req.session.user_id];
-  if (!user) {
+  if (!user) { //Check if user is logged in
     res.status(403).send("<h1>403 Forbidden.</h1> <p>Please log in or register to view this page.</p>");
     return;
   }
@@ -113,20 +118,24 @@ app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const url = urlDatabase[shortURL];
   
-  if (!user) {
+  if (shortURL.length > 6) { // Check if the length of the shortURL is longer than 6 characters
+    res.status(404).send("<h1>404 Not Found.</h1> <p>Error: URL does not exist.</p>");
+    return;
+  }
+  if (!user) { //Check if user is logged in
     res.status(403).send("<h1>403 Forbidden.</h1> <p>Please log in or register to view this page.</p>");
     return;
   }
-  if (!url || url.userID !== user.id) {
+  if (!url || url.userID !== user.id) { // Check if URL ID belongs to logged in user
     res.status(404).send("<h1>404 Not Found.</h1> <p>Error: URL not found or does not belong to the current user.</p>");
     return;
   }
 
   const templateVars = { 
     shortURL,
-    longURL: url, // Pass the entire URL object
+    longURL: url,
     user,
-    id: shortURL // Pass the shortURL as id to the template
+    id: shortURL
   };
   res.render("urls_show", templateVars);
 });
@@ -136,13 +145,14 @@ app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // Extract the shortURL from the request parameters
   const longURL = urlDatabase[shortURL]; // Get the longURL associated with the shortURL from the urlDatabase
 
-  if (!longURL) {
-    // If the short URL does not exist in the database, send a relevant error message
+  if (!longURL) { // If the short URL does not exist in the database, send a relevant error message
     res.status(404).send("<h1>404 Not Found.</h1><p>The requested URL does not exist.</p>");
+    return;
   } else {
     res.redirect(longURL.longURL); // Redirect to the longURL
   }
 });
+
 
 //delete URL from database
 app.post("/urls/:id/delete", (req, res) => {
@@ -153,7 +163,7 @@ app.post("/urls/:id/delete", (req, res) => {
     res.status(404).send("<h1>404 Not Found.</h1><p>Error: URL not found.</p>");
     return;
   }
-  if (!user) {// Check if the user is logged in
+  if (!user) { // Check if the user is logged in
     res.status(401).send("<h1>401 Unauthorized.</h1><p>Error: You must be logged in to delete this URL.</p>");
     return;
   }
@@ -182,7 +192,7 @@ app.post("/urls/:id", (req, res) => {
     return;
   }
   if (urlDatabase[shortURL].userID !== user.id) { // Check if the user owns the URL
-    res.status(403).send("<h1>403 Forbidden.</h1><p>Error: You are not authorized to delete this URL.</p>Error: You are not authorized to edit this URL.");
+    res.status(407).send("<h1>407 Forbidden.</h1><p>Error: You are not authorized to delete this URL.</p>Error: You are not authorized to edit this URL.");
     return;
   }
 
@@ -204,7 +214,7 @@ app.post("/login", (req, res) => {
     return;
   }
   if (!bcrypt.compareSync(password, user.password)) {  // If the HASHED password does not match, return a response with a 403 status code
-    res.status(403).send("<h1>403 Forbidden.</h1><p>Incorrect Email or Password</p>");
+    res.status(407).send("<h1>407 Forbidden.</h1><p>Incorrect Email or Password</p>");
     return;
   }
   req.session.user_id = user.id;
@@ -261,3 +271,5 @@ app.get("/login", (req, res) => {
     res.render("login", { user }); // Pass the user variable to the login template
   }
 });
+
+module.exports = server;

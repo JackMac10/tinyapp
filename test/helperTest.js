@@ -1,29 +1,49 @@
-const { assert } = require('chai');
+const chai = require("chai");
+const chaiHttp = require("chai-http");
+const expect = chai.expect;
 
-const { getUserByEmail } = require('../helper.js');
+chai.use(chaiHttp);
 
-const testUsers = {
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }
-};
+const server = require('../express_server.js');
 
-describe('getUserByEmail', function() {
-  it('should return a user with valid email', function() {
-    const user = getUserByEmail("user@example.com", testUsers);
-    const expectedUserID = "userRandomID";
-    assert.equal(user.id, expectedUserID, 'these are the same!'); // Assert that the returned user's ID matches the expected user ID
+describe("Login and Access Control Test", () => {
+  const agent = chai.request.agent("http://localhost:8080");
+
+  // Test case: User should be redirected to /login if they are not logged in
+  it('should redirect GET "/" to "/login"', () => {
+    return agent
+      .get("/")
+      .then((res) => {
+        expect(res).to.redirect;
+        expect(res).to.redirectTo("http://localhost:8080/login");
+      });
   });
 
-  it('should return undefined for a non-existent email', function() {
-    const user = getUserByEmail("nonexistent@example.com", testUsers);
-    assert.isUndefined(user, 'user is Not defined'); // Assert that the returned user is undefined
+  // Test case: User should be redirected to /login if they are not logged in
+  it('should redirect GET "/urls/new" to "/login"', () => {
+    return agent
+      .get("/urls/new")
+      .then((res) => {
+        expect(res).to.redirect;
+        expect(res).to.redirectTo("http://localhost:8080/login");
+      });
+  });
+
+  // Test case: User should see an error message if the URL doesn't exist
+  it('should return status code 404 for non-existent URL', () => {
+    return agent
+      .get("/urls/NOTEXISTS")
+      .then((res) => {
+        expect(res).to.have.status(404);
+      });
+  });
+
+  // Test case: User should see an error message if they do not own the URL
+  it('should return status code 403 for unauthorized access to "/urls/b2xVn2"', () => {
+    return agent
+      .get("/urls/b2xVn2")
+      .then((res) => {
+        expect(res).to.have.status(403);
+      });
   });
 });
