@@ -2,11 +2,31 @@
 
 Hi! Im Jack MacDonald!
 
-This is my TinyApp School Project under LightHouseLabs!
+This is my TinyApp Project under LightHouseLabs! TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
 
-The function of this web app is to take a long url from the webside client via a form, associate a unique 6 character ID with it and store it in a database. Phonebook style! 
-Users are able to register / login by supplying a Email and Password.
+# TinyApp Project
+
+The function of this web app is to take a url from the webside client via a form, associate and store a unique 6 character ID with it and allow you to directly call or be redirected to the site instantly! Phonebook style! 
+Users must register and/or login by supplying a Email and Password to veiw their saved urls.
 
 WARNING: LOW SECURITY MESURES ON THIS APP, DO NOT STORE SENSITIVE INFORMATION AND/OR PERSONAL PASSWORDS.
 
 This app is dependant on Express, Cookie-Parser and EJS to run
+
+## Final Product
+
+!["screenshot description"](#)
+!["screenshot description"](#)
+
+## Dependencies
+
+- Node.js
+- Express
+- EJS
+- bcryptjs
+- cookie-session
+
+## Getting Started
+
+- Install all dependencies (using the `npm install` command).
+- Run the development web server using the `node express_server.js` command.
