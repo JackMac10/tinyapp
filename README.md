@@ -15,8 +15,10 @@ This app is dependant on Express, Cookie-Parser and EJS to run
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["URLS HOMEPAGE"](https://github.com/JackMac10/tinyapp/blob/main/docs/:URLs.jpg?raw=true)
+!["LOGIN PAGE"](https://github.com/JackMac10/tinyapp/blob/main/docs/:login.jpg?raw=true)
+!["REGISTRATION PAGE"](https://github.com/JackMac10/tinyapp/blob/main/docs/:register.jpg?raw=true)
+!["EDIT URL PAGE"](https://github.com/JackMac10/tinyapp/blob/main/docs/urls:id.jpg?raw=true)
 
 ## Dependencies
 
